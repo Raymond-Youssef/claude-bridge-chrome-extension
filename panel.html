@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    color: #ece3db;
+    background: #1a1410;
+    padding: 12px;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+
+  button {
+    background: #2e2419;
+    color: #ece3db;
+    border: 1px solid #4a3828;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #4a3828; }
+  button.active {
+    background: #c75b24;
+    border-color: #e07a3a;
+    color: #fff;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #e07a3a;
+    opacity: 0.8;
+  }
+
+  .status {
+    font-size: 11px;
+    color: #8a7565;
+    margin-left: auto;
+  }
+  .status.connected { color: #e07a3a; }
+
+  .empty {
+    color: #8a7565;
+    text-align: center;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+
+  .element-card {
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a89280;
+    margin-bottom: 6px;
+  }
+
+  .component-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e07a3a;
+    margin-bottom: 2px;
+  }
+
+  .file-path {
+    font-size: 11px;
+    color: #d4956a;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+  }
+
+  .parent-chain {
+    font-size: 11px;
+    color: #8a7565;
+    margin-top: 4px;
+  }
+
+  .prop-list, .style-list {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .prop-key { color: #e07a3a; }
+  .prop-value { color: #d4a574; }
+  .style-key { color: #d4956a; }
+  .style-value { color: #ece3db; }
+
+  .selector {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    color: #8a7565;
+    margin-top: 4px;
+  }
+
+  .html-snippet {
+    background: #120e09;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #a89280;
+    overflow-x: auto;
+    max-height: 120px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .history-item:hover { background: #2e2419; }
+  .history-item.active { background: #2e2419; border-left: 2px solid #e07a3a; }
+  .history-index {
+    font-size: 10px;
+    color: #5c4a3a;
+    width: 16px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .history-name { color: #e07a3a; font-weight: 500; }
+  .history-file { color: #5c4a3a; font-size: 11px; margin-left: auto; }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+  .tab {
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #8a7565;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+  .tab:hover { color: #ece3db; background: none; }
+  .tab.active {
+    color: #ece3db;
+    border-bottom-color: #e07a3a;
+    background: none;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="inspect-btn">Inspect</button>
+    <button id="clear-btn">Clear</button>
+    <span id="hint" class="hint" style="display:none;">Option+Click to select an element</span>
+    <span id="status" class="status">Waiting...</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="element">Element</div>
+    <div class="tab" data-tab="history">History</div>
+  </div>
+
+  <div id="tab-element" class="tab-content active">
+    <div id="empty-state" class="empty">
+      Click <strong>Inspect</strong> then Option+Click an element<br>on your localhost page.
+    </div>
+    <div id="element-detail" style="display:none;"></div>
+  </div>
+
+  <div id="tab-history" class="tab-content">
+    <div id="history-list"></div>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>
