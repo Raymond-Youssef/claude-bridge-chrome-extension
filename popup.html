@@ -1,12 +1,188 @@
 <!DOCTYPE html>
 <html>
-<body style="width: 260px; padding: 12px; font-family: system-ui;">
-  <button id="copy-setup" style="width: 100%; padding: 8px; cursor: pointer; font-size: 12px;">
-    Copy MCP setup command
-  </button>
-  <p id="copy-status" style="font-size: 11px; color: #22c55e; margin-top: 4px; display: none;">
-    Copied! Paste into your terminal.
-  </p>
+<head>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 280px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 12px;
+    color: #ece3db;
+    background: #1a1410;
+    padding: 16px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+  .header img { width: 20px; height: 20px; }
+  .header span { font-weight: 600; font-size: 13px; }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.connected { background: #4ade80; box-shadow: 0 0 6px rgba(74, 222, 128, 0.4); }
+  .status-dot.disconnected { background: #8a7565; }
+  .status-label { flex: 1; }
+  .status-value { font-weight: 500; }
+  .status-value.connected { color: #4ade80; }
+  .status-value.disconnected { color: #8a7565; }
+
+  .section {
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a89280;
+    margin-bottom: 8px;
+  }
+
+  .step {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .step:last-child { margin-bottom: 0; }
+  .step-num {
+    color: #e07a3a;
+    font-weight: 600;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+  }
+  .step-text { color: #a89280; }
+
+  code {
+    background: #120e09;
+    color: #d4956a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 10.5px;
+  }
+
+  button {
+    width: 100%;
+    background: #2e2419;
+    color: #ece3db;
+    border: 1px solid #4a3828;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #4a3828; }
+  .shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 8px 22px;
+  }
+  .shortcut-label {
+    color: #5c4a3a;
+    font-size: 11px;
+  }
+
+  .copy-feedback {
+    font-size: 11px;
+    color: #4ade80;
+    text-align: center;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .hint {
+    color: #5c4a3a;
+    font-size: 11px;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+  .hint a {
+    color: #e07a3a;
+    text-decoration: none;
+  }
+
+  kbd {
+    background: #120e09;
+    color: #d4956a;
+    border: 1px solid #4a3828;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon-48.png" alt="">
+    <span>Claude Bridge</span>
+  </div>
+
+  <div class="status-row">
+    <div id="status-dot" class="status-dot disconnected"></div>
+    <span class="status-label">MCP Server</span>
+    <span id="status-value" class="status-value disconnected">Checking...</span>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Setup</div>
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-text">Add the MCP server to Claude Code:</span>
+    </div>
+    <button id="copy-setup" style="margin: 6px 0 8px;">Copy MCP setup command</button>
+    <div id="copy-feedback" class="copy-feedback">Copied! Paste into your terminal.</div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-text">Open DevTools and go to the <strong style="color:#ece3db;">Claude Bridge</strong> tab:</span>
+    </div>
+    <div class="shortcut-row">
+      <kbd id="shortcut-key">F12</kbd>
+      <span class="shortcut-label">or</span>
+      <kbd id="shortcut-alt"></kbd>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <span class="step-text">Click <strong style="color:#ece3db;">Inspect</strong>, then click any element to capture it</span>
+    </div>
+  </div>
+
+  <div class="hint">
+    Element data is sent locally to Claude Code.<br>
+    Nothing leaves your machine.
+  </div>
+
+  <script src="popup.js"></script>
 </body>
-<script src="popup.js"></script>
 </html>

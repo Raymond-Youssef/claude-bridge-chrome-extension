@@ -15,7 +15,7 @@ HOW IT WORKS
 1. Open DevTools and go to the "Claude Bridge" panel
 2. Click "Inspect" to enter inspection mode
 3. Hover over elements to see component names highlighted
-4. Option+Click (Alt+Click on Windows/Linux) to capture an element
+4. Click an element to capture it (inspect mode stops automatically)
 5. The element data is instantly available in your Claude Code session
 
 WHAT GETS CAPTURED

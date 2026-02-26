@@ -16,3 +16,10 @@ window.addEventListener('message', (event) => {
     payload: event.data.payload
   });
 });
+
+// Listen for disable message from background (DevTools panel closed)
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === 'DISABLE_INSPECT') {
+    window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: false }, '*');
+  }
+});

@@ -5,7 +5,7 @@ A Chrome DevTools extension that lets you point at any React element on your pag
 ## What it does
 
 1. **Inspect mode** - Click "Inspect" in the Claude Bridge DevTools panel, then hover over elements to see their React component names highlighted
-2. **Capture** - Option+Click (Alt+Click on Windows/Linux) any element to capture:
+2. **Capture** - Click any element to select it (inspect mode auto-stops, like Chrome's native element picker). Captures:
    - React component name, props, and file path
    - Component ancestry chain (up to 3 levels)
    - DOM selector, HTML snippet, and computed styles
@@ -43,7 +43,7 @@ Open Chrome DevTools on any localhost page. You'll see a new **Claude Bridge** p
 
 1. Click **Inspect** in the Claude Bridge panel
 2. Hover over elements to see component highlights
-3. **Option+Click** (Alt+Click) an element to capture it
+3. Click an element to capture it (inspect mode stops automatically)
 4. The element data is sent to Claude Code and displayed in the panel
 
 ## DevTools panel

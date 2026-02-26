@@ -175,12 +175,13 @@ function sanitizeProps(props) {
   const clean = {};
   for (const [key, value] of Object.entries(props)) {
     if (key === 'children') continue;
-    if (typeof value === 'function') {
-      clean[key] = '[function]';
-    } else if (typeof value === 'object' && value !== null) {
+    const t = typeof value;
+    if (t === 'function' || t === 'symbol') {
+      clean[key] = `[${t}]`;
+    } else if (t === 'object' && value !== null) {
       try {
         const str = JSON.stringify(value);
-        if (str.length < 500) clean[key] = value;
+        if (str.length < 500) clean[key] = JSON.parse(str);
         else clean[key] = '[large object]';
       } catch {
         clean[key] = '[circular]';
@@ -192,14 +193,40 @@ function sanitizeProps(props) {
   return clean;
 }
 
-// --- Element capture on Option+Click ---
+// --- Block follow-up events after element capture to prevent link navigation ---
 
-document.addEventListener('click', (event) => {
-  if (!event.altKey) return;
+let blockInteraction = false;
+
+for (const evt of ['mousedown', 'mouseup', 'pointerup', 'click', 'auxclick']) {
+  document.addEventListener(evt, (e) => {
+    if (!blockInteraction) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    // click is the last event in the sequence — reset the flag
+    if (evt === 'click') blockInteraction = false;
+  }, true);
+}
+
+// Reset the flag as a safety net (e.g. if click never fires)
+document.addEventListener('pointerup', () => {
+  if (blockInteraction) setTimeout(() => { blockInteraction = false; }, 50);
+}, true);
+
+// --- Element capture on pointerdown (earliest event, fires before link navigation) ---
+
+document.addEventListener('pointerdown', (event) => {
   if (!inspectMode) return;
 
   event.preventDefault();
   event.stopPropagation();
+  event.stopImmediatePropagation();
+  blockInteraction = true;
+
+  // Stop inspecting after selection
+  inspectMode = false;
+  document.body.style.cursor = '';
+  hideOverlay();
 
   const element = event.target;
   const rect = element.getBoundingClientRect();
@@ -234,9 +261,18 @@ document.addEventListener('click', (event) => {
     timestamp: new Date().toISOString()
   };
 
+  // JSON round-trip to strip non-clonable data (Symbols, DOM refs, etc.)
+  // that would cause window.postMessage to silently fail.
+  let safePayload;
+  try {
+    safePayload = JSON.parse(JSON.stringify(payload));
+  } catch {
+    safePayload = { ...payload, react: null, computedStyles: {} };
+  }
+
   window.postMessage({
     type: 'ELEMENT_BRIDGE_CAPTURE',
-    payload
+    payload: safePayload
   }, '*');
 
   flashElement(element);

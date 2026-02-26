@@ -10,6 +10,12 @@ const emptyState = document.getElementById('empty-state');
 const elementDetail = document.getElementById('element-detail');
 const historyList = document.getElementById('history-list');
 
+// Connect a port to background so it knows the panel is open.
+// When this panel is destroyed (DevTools closed), the port disconnects
+// and background will disable inspect mode on the tab.
+const panelPort = chrome.runtime.connect({ name: 'devtools-panel' });
+panelPort.postMessage({ type: 'PANEL_INIT', tabId: chrome.devtools.inspectedWindow.tabId });
+
 // --- Tabs ---
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -58,6 +64,12 @@ chrome.runtime.onMessage.addListener((message) => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector('[data-tab="element"]').classList.add('active');
     document.getElementById('tab-element').classList.add('active');
+
+    // Inspect mode auto-stopped after selection
+    inspecting = false;
+    inspectBtn.classList.remove('active');
+    inspectBtn.textContent = 'Inspect';
+    document.getElementById('hint').style.display = 'none';
 
     statusEl.textContent = 'Captured';
     statusEl.className = 'status connected';
