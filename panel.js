@@ -18,15 +18,25 @@ const panelPort = chrome.runtime.connect({ name: 'devtools-panel' });
 panelPort.postMessage({ type: 'PANEL_INIT', tabId: chrome.devtools.inspectedWindow.tabId });
 
 // --- MCP status indicator ---
+let mcpPollId = null;
+
 function updateMcpStatus() {
-  chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
-    if (chrome.runtime.lastError) return;
-    mcpDot.className = response?.connected ? 'mcp-dot connected' : 'mcp-dot';
-    mcpDot.title = response?.connected ? 'MCP server connected' : 'MCP server not connected';
-  });
+  try {
+    chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
+      if (chrome.runtime.lastError) {
+        // Extension was reloaded — stop polling
+        if (mcpPollId) clearInterval(mcpPollId);
+        return;
+      }
+      mcpDot.className = response?.connected ? 'mcp-dot connected' : 'mcp-dot';
+      mcpDot.title = response?.connected ? 'MCP server connected' : 'MCP server not connected';
+    });
+  } catch {
+    if (mcpPollId) clearInterval(mcpPollId);
+  }
 }
 updateMcpStatus();
-setInterval(updateMcpStatus, 3000);
+mcpPollId = setInterval(updateMcpStatus, 3000);
 
 // --- Tab switching helper ---
 function switchToTab(name) {

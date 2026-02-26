@@ -5,13 +5,16 @@ let retryDelay = 1000;
 const MAX_RETRY_DELAY = 30000;
 
 function connectWebSocket() {
+  let wasConnected = false;
   ws = new WebSocket(`ws://localhost:${WS_PORT}`);
   ws.onopen = () => {
+    wasConnected = true;
     console.log('[claude-bridge] Connected to MCP server');
     retryDelay = 1000;
   };
   ws.onclose = () => {
-    console.log(`[claude-bridge] Disconnected, retrying in ${retryDelay / 1000}s...`);
+    // Only log if we were previously connected (not on initial connection failures)
+    if (wasConnected) console.log('[claude-bridge] Disconnected from MCP server');
     setTimeout(connectWebSocket, retryDelay);
     retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY);
   };
