@@ -5,8 +5,8 @@ let activeIndex = -1;
 
 const inspectBtn = document.getElementById('inspect-btn');
 const clearBtn = document.getElementById('clear-btn');
-const statusEl = document.getElementById('status');
 const mcpDot = document.getElementById('mcp-dot');
+const mcpLabel = document.getElementById('mcp-label');
 const emptyState = document.getElementById('empty-state');
 const elementDetail = document.getElementById('element-detail');
 const historyList = document.getElementById('history-list');
@@ -22,18 +22,25 @@ let mcpPollId = null;
 
 function updateMcpStatus() {
   try {
-    chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
-      if (chrome.runtime.lastError) {
-        // Extension was reloaded — stop polling
-        if (mcpPollId) clearInterval(mcpPollId);
-        return;
-      }
-      mcpDot.className = response?.connected ? 'mcp-dot connected' : 'mcp-dot';
-      mcpDot.title = response?.connected ? 'MCP server connected' : 'MCP server not connected';
-    });
+    void chrome.runtime.id; // throws if context is invalidated
   } catch {
-    if (mcpPollId) clearInterval(mcpPollId);
+    clearInterval(mcpPollId);
+    return;
   }
+  chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
+    try { void chrome.runtime.lastError; } catch { clearInterval(mcpPollId); return; }
+    if (response?.connected) {
+      mcpDot.className = 'mcp-dot connected';
+      mcpDot.title = 'MCP server connected';
+      mcpLabel.textContent = 'MCP connected';
+      mcpLabel.className = 'mcp-label connected';
+    } else {
+      mcpDot.className = 'mcp-dot';
+      mcpDot.title = 'MCP server not connected';
+      mcpLabel.textContent = 'MCP disconnected';
+      mcpLabel.className = 'mcp-label';
+    }
+  });
 }
 updateMcpStatus();
 mcpPollId = setInterval(updateMcpStatus, 3000);
@@ -67,8 +74,8 @@ inspectBtn.addEventListener('click', () => {
         inspectBtn.classList.remove('active');
         inspectBtn.textContent = 'Inspect';
         document.getElementById('hint').style.display = 'none';
-        statusEl.textContent = 'Error';
-        statusEl.className = 'status';
+        mcpLabel.textContent = 'Error';
+        mcpLabel.className = 'mcp-label';
       }
     }
   );
@@ -100,12 +107,9 @@ chrome.runtime.onMessage.addListener((message) => {
     inspectBtn.textContent = 'Inspect';
     document.getElementById('hint').style.display = 'none';
 
-    statusEl.textContent = 'Captured';
-    statusEl.className = 'status connected';
-    setTimeout(() => {
-      statusEl.textContent = 'Ready';
-      statusEl.className = 'status connected';
-    }, 1500);
+    mcpLabel.textContent = 'Captured';
+    mcpLabel.className = 'mcp-label connected';
+    setTimeout(() => updateMcpStatus(), 1500);
   }
 });
 

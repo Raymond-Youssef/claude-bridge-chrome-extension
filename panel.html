@@ -43,24 +43,27 @@
     opacity: 0.8;
   }
 
-  .status {
-    font-size: 11px;
-    color: #8a7565;
+  .mcp-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     margin-left: auto;
+    font-size: 11px;
   }
-  .status.connected { color: #e07a3a; }
-
   .mcp-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #5c4a3a;
+    background: #e05a5a;
+    box-shadow: 0 0 5px rgba(224, 90, 90, 0.4);
     flex-shrink: 0;
   }
   .mcp-dot.connected {
     background: #4ade80;
     box-shadow: 0 0 5px rgba(74, 222, 128, 0.4);
   }
+  .mcp-label { color: #e05a5a; }
+  .mcp-label.connected { color: #4ade80; }
 
   .empty {
     color: #8a7565;
@@ -191,8 +194,10 @@
     <button id="inspect-btn">Inspect</button>
     <button id="clear-btn">Clear</button>
     <span id="hint" class="hint" style="display:none;">Click an element to select it</span>
-    <div id="mcp-dot" class="mcp-dot" title="MCP server not connected"></div>
-    <span id="status" class="status">Waiting...</span>
+    <div class="mcp-status">
+      <div id="mcp-dot" class="mcp-dot" title="MCP server not connected"></div>
+      <span id="mcp-label" class="mcp-label">MCP disconnected</span>
+    </div>
   </div>
 
   <div class="tabs">
