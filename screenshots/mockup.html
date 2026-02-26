@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1280px;
+    height: 800px;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1e1e1e;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* --- Fake browser page (left side) --- */
+  .page {
+    flex: 1;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+  }
+  .page-bar {
+    background: #2d2d2d;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #28ca42; }
+  .url-bar {
+    flex: 1;
+    background: #3c3c3c;
+    border-radius: 6px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: #999;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .page-content {
+    flex: 1;
+    padding: 40px;
+    position: relative;
+  }
+
+  /* Fake React app content */
+  .fake-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 32px;
+  }
+  .fake-logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+  }
+  .fake-nav-links { display: flex; gap: 24px; }
+  .fake-nav-links a { color: #6b7280; font-size: 14px; text-decoration: none; }
+
+  .fake-hero { margin-bottom: 32px; }
+  .fake-hero h1 { font-size: 36px; font-weight: 700; color: #111; margin-bottom: 8px; }
+  .fake-hero p { color: #6b7280; font-size: 16px; line-height: 1.6; max-width: 500px; }
+
+  .fake-cards { display: flex; gap: 16px; }
+  .fake-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    width: 200px;
+  }
+  .fake-card h3 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 4px; }
+  .fake-card p { font-size: 12px; color: #6b7280; line-height: 1.5; }
+
+  /* Highlight overlay on one card */
+  .highlight-target {
+    position: relative;
+  }
+  .highlight-overlay {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #e07a3a;
+    background: rgba(224, 122, 58, 0.08);
+    border-radius: 14px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .highlight-label {
+    position: absolute;
+    bottom: 100%;
+    left: -2px;
+    background: #e07a3a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 3px 3px 0 0;
+    white-space: nowrap;
+    line-height: 16px;
+    font-family: system-ui;
+  }
+
+  /* --- DevTools panel (right side) --- */
+  .devtools {
+    width: 420px;
+    background: #1a1410;
+    border-left: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .devtools-tabs {
+    background: #2d2d2d;
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 8px;
+    gap: 0;
+  }
+  .dt-tab {
+    padding: 6px 12px;
+    font-size: 11px;
+    color: #999;
+    cursor: default;
+  }
+  .dt-tab.active {
+    color: #e07a3a;
+    border-bottom: 2px solid #e07a3a;
+    background: #1a1410;
+    border-radius: 4px 4px 0 0;
+  }
+  .dt-tab.other { color: #777; }
+
+  .panel-content {
+    flex: 1;
+    padding: 12px;
+    color: #ece3db;
+    font-size: 12px;
+    overflow: hidden;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+  .toolbar button {
+    background: #2e2419;
+    color: #ece3db;
+    border: 1px solid #4a3828;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .toolbar button.active {
+    background: #c75b24;
+    border-color: #e07a3a;
+    color: #fff;
+  }
+  .toolbar .hint {
+    font-size: 11px;
+    color: #e07a3a;
+    opacity: 0.8;
+  }
+  .toolbar .status {
+    font-size: 11px;
+    color: #e07a3a;
+    margin-left: auto;
+  }
+
+  .panel-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+  .p-tab {
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #8a7565;
+    border-bottom: 2px solid transparent;
+  }
+  .p-tab.active {
+    color: #ece3db;
+    border-bottom-color: #e07a3a;
+  }
+
+  .element-card {
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a89280;
+    margin-bottom: 6px;
+  }
+  .component-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e07a3a;
+    margin-bottom: 2px;
+  }
+  .file-path {
+    font-size: 11px;
+    color: #d4956a;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+  }
+  .parent-chain {
+    font-size: 11px;
+    color: #8a7565;
+    margin-top: 4px;
+  }
+  .prop-list {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .prop-key { color: #e07a3a; }
+  .prop-value { color: #d4a574; }
+  .selector {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    color: #8a7565;
+  }
+  .style-list {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .style-key { color: #d4956a; }
+  .style-value { color: #ece3db; }
+</style>
+</head>
+<body>
+
+  <!-- LEFT: Fake browser page -->
+  <div class="page">
+    <div class="page-bar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="url-bar">localhost:3000</div>
+    </div>
+    <div class="page-content">
+      <div class="fake-nav">
+        <div class="fake-logo">MyApp</div>
+        <div class="fake-nav-links">
+          <a>Dashboard</a>
+          <a>Settings</a>
+          <a>Docs</a>
+        </div>
+      </div>
+      <div class="fake-hero">
+        <h1>Welcome back, Raymond</h1>
+        <p>Here's an overview of your projects. Click on a card to view details and manage your workspace.</p>
+      </div>
+      <div class="fake-cards">
+        <div class="fake-card">
+          <h3>Analytics</h3>
+          <p>Track user engagement and conversion metrics in real time.</p>
+        </div>
+        <div class="fake-card highlight-target">
+          <div class="highlight-overlay">
+            <div class="highlight-label">&lt;ProjectCard&gt;</div>
+          </div>
+          <h3>Claude Bridge</h3>
+          <p>Inspect React elements and send context to Claude Code.</p>
+        </div>
+        <div class="fake-card">
+          <h3>Deployments</h3>
+          <p>View and manage your recent deployment history.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: DevTools panel -->
+  <div class="devtools">
+    <div class="devtools-tabs">
+      <div class="dt-tab other">Elements</div>
+      <div class="dt-tab other">Console</div>
+      <div class="dt-tab other">Network</div>
+      <div class="dt-tab active">Claude Bridge</div>
+    </div>
+    <div class="panel-content">
+      <div class="toolbar">
+        <button class="active">Stop Inspecting</button>
+        <button>Clear</button>
+        <span class="hint">Click an element to select it</span>
+        <span class="status">Ready</span>
+      </div>
+      <div class="panel-tabs">
+        <div class="p-tab active">Element</div>
+        <div class="p-tab">History</div>
+      </div>
+
+      <div class="element-card">
+        <div class="section-title">React Component</div>
+        <div class="component-name">&lt;ProjectCard&gt;</div>
+        <div class="file-path">src/components/ProjectCard.tsx:14</div>
+        <div class="parent-chain">ProjectCard &rarr; Dashboard &rarr; App</div>
+      </div>
+
+      <div class="element-card">
+        <div class="section-title">Props</div>
+        <div class="prop-list">
+          <div><span class="prop-key">title</span>: <span class="prop-value">"Claude Bridge"</span></div>
+          <div><span class="prop-key">description</span>: <span class="prop-value">"Inspect React elements..."</span></div>
+          <div><span class="prop-key">onClick</span>: <span class="prop-value">[function]</span></div>
+        </div>
+      </div>
+
+      <div class="element-card">
+        <div class="section-title">DOM</div>
+        <div class="selector">div.fake-card.highlight-target</div>
+      </div>
+
+      <div class="element-card">
+        <div class="section-title">Computed Styles</div>
+        <div class="style-list">
+          <div><span class="style-key">display</span>: <span class="style-value">block</span></div>
+          <div><span class="style-key">padding</span>: <span class="style-value">20px</span></div>
+          <div><span class="style-key">borderRadius</span>: <span class="style-value">12px</span></div>
+          <div><span class="style-key">backgroundColor</span>: <span class="style-value">rgb(249, 250, 251)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1280px;
+    height: 800px;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+  }
+
+  /* --- Popup mockup --- */
+  .popup-wrapper {
+    position: relative;
+  }
+  .popup-wrapper::before {
+    content: 'Extension Popup';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #8a7565;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+  .popup {
+    width: 280px;
+    background: #1a1410;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 12px;
+    color: #ece3db;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2e2419;
+  }
+  .header img { width: 20px; height: 20px; }
+  .header span { font-weight: 600; font-size: 13px; }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+    flex-shrink: 0;
+  }
+  .status-label { flex: 1; }
+  .status-value { font-weight: 500; color: #4ade80; }
+
+  .section {
+    background: #211a12;
+    border: 1px solid #2e2419;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a89280;
+    margin-bottom: 8px;
+  }
+  .step {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .step:last-child { margin-bottom: 0; }
+  .step-num { color: #e07a3a; font-weight: 600; flex-shrink: 0; width: 14px; text-align: center; }
+  .step-text { color: #a89280; }
+  .step-text strong { color: #ece3db; }
+
+  button {
+    width: 100%;
+    background: #2e2419;
+    color: #ece3db;
+    border: 1px solid #4a3828;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  kbd {
+    background: #120e09;
+    color: #d4956a;
+    border: 1px solid #4a3828;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 8px 22px;
+  }
+  .shortcut-label { color: #5c4a3a; font-size: 11px; }
+
+  .hint {
+    color: #5c4a3a;
+    font-size: 11px;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+
+  /* --- Feature callouts --- */
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 400px;
+  }
+  .feature {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(224, 122, 58, 0.12);
+    border: 1px solid rgba(224, 122, 58, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+  }
+  .feature-text h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ece3db;
+    margin-bottom: 4px;
+  }
+  .feature-text p {
+    font-size: 13px;
+    color: #8a7565;
+    line-height: 1.5;
+  }
+
+  .title-area {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .title-area h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ece3db;
+    margin-bottom: 8px;
+  }
+  .title-area p {
+    font-size: 15px;
+    color: #8a7565;
+  }
+
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="popup-wrapper">
+    <div class="popup">
+      <div class="header">
+        <img src="/Users/raymond-mac/Projects/claude-bridge-chrome-extension/icons/icon-48.png" alt="">
+        <span>Claude Bridge</span>
+      </div>
+
+      <div class="status-row">
+        <div class="status-dot"></div>
+        <span class="status-label">MCP Server</span>
+        <span class="status-value">Connected</span>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Setup</div>
+        <div class="step">
+          <span class="step-num">1</span>
+          <span class="step-text">Add the MCP server to Claude Code:</span>
+        </div>
+        <button style="margin: 6px 0 8px;">Copy MCP setup command</button>
+        <div class="step">
+          <span class="step-num">2</span>
+          <span class="step-text">Open DevTools and go to the <strong>Claude Bridge</strong> tab:</span>
+        </div>
+        <div class="shortcut-row">
+          <kbd>F12</kbd>
+          <span class="shortcut-label">or</span>
+          <kbd>&#x2318;&#x2325;I</kbd>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <span class="step-text">Click <strong>Inspect</strong>, then click any element to capture it</span>
+        </div>
+      </div>
+
+      <div class="hint">
+        Element data is sent locally to Claude Code.<br>
+        Nothing leaves your machine.
+      </div>
+    </div>
+  </div>
+
+  <div class="right-col">
+    <div class="title-area">
+      <h1>Claude Bridge</h1>
+      <p>Inspect elements. Send context to Claude Code.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">&#x1F50D;</div>
+        <div class="feature-text">
+          <h3>Point &amp; Click Inspection</h3>
+          <p>Hover to highlight elements with React component names. Click to capture full context.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x269B;&#xFE0F;</div>
+        <div class="feature-text">
+          <h3>React Component Context</h3>
+          <p>Captures component name, props, source file path, and ancestry chain up to 3 levels.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#x26A1;</div>
+        <div class="feature-text">
+          <h3>Instant MCP Bridge</h3>
+          <p>Element data is sent to Claude Code via a local MCP server. Nothing leaves your machine.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
