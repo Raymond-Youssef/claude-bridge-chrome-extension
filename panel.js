@@ -142,6 +142,14 @@ function renderElement(el) {
     html += `</div>`;
   }
 
+  // Sample prompt
+  const samplePrompt = 'Use claude-bridge MCP to fetch the selected element';
+  html += `<div class="element-card">`;
+  html += `<div class="section-title">Sample Prompt</div>`;
+  html += `<div class="prompt-box">${esc(samplePrompt)}</div>`;
+  html += `<button class="copy-prompt-btn" id="copy-prompt-btn">Copy</button>`;
+  html += `</div>`;
+
   // Props
   if (el.react?.props && Object.keys(el.react.props).length) {
     html += `<div class="element-card">`;
@@ -181,6 +189,16 @@ function renderElement(el) {
   html += `</div>`;
 
   elementDetail.innerHTML = html;
+
+  const copyBtn = document.getElementById('copy-prompt-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(samplePrompt).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      });
+    });
+  }
 }
 
 // --- Render history ---
