@@ -1,13 +1,19 @@
 // background.js — service worker that manages WebSocket to MCP server
 const WS_PORT = 18925;
 let ws = null;
+let retryDelay = 1000;
+const MAX_RETRY_DELAY = 30000;
 
 function connectWebSocket() {
   ws = new WebSocket(`ws://localhost:${WS_PORT}`);
-  ws.onopen = () => console.log('[claude-bridge] Connected to MCP server');
+  ws.onopen = () => {
+    console.log('[claude-bridge] Connected to MCP server');
+    retryDelay = 1000; // reset on successful connection
+  };
   ws.onclose = () => {
-    console.log('[claude-bridge] Disconnected, retrying in 3s...');
-    setTimeout(connectWebSocket, 3000);
+    console.log(`[claude-bridge] Disconnected, retrying in ${retryDelay / 1000}s...`);
+    setTimeout(connectWebSocket, retryDelay);
+    retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY);
   };
   ws.onerror = () => ws.close();
 }

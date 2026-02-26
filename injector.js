@@ -14,7 +14,7 @@ window.addEventListener('message', (event) => {
   chrome.runtime.sendMessage({
     type: 'ELEMENT_CAPTURED',
     payload: event.data.payload
-  });
+  }).catch(() => {});
 });
 
 // Listen for disable message from background (DevTools panel closed)

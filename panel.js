@@ -34,7 +34,18 @@ inspectBtn.addEventListener('click', () => {
   document.getElementById('hint').style.display = inspecting ? '' : 'none';
 
   chrome.devtools.inspectedWindow.eval(
-    `window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: ${inspecting} }, '*')`
+    `window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: ${inspecting} }, '*')`,
+    (_result, error) => {
+      if (error) {
+        // Page may have navigated or CSP blocked eval — reset state
+        inspecting = false;
+        inspectBtn.classList.remove('active');
+        inspectBtn.textContent = 'Inspect';
+        document.getElementById('hint').style.display = 'none';
+        statusEl.textContent = 'Error';
+        statusEl.className = 'status';
+      }
+    }
   );
 });
 

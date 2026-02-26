@@ -203,15 +203,13 @@ for (const evt of ['mousedown', 'mouseup', 'pointerup', 'click', 'auxclick']) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    // click is the last event in the sequence — reset the flag
-    if (evt === 'click') blockInteraction = false;
+    // Reset after click (last in sequence) or pointerup (safety net if
+    // preventDefault on pointerdown suppressed click from ever firing)
+    if (evt === 'click' || evt === 'pointerup') {
+      setTimeout(() => { blockInteraction = false; }, 0);
+    }
   }, true);
 }
-
-// Reset the flag as a safety net (e.g. if click never fires)
-document.addEventListener('pointerup', () => {
-  if (blockInteraction) setTimeout(() => { blockInteraction = false; }, 50);
-}, true);
 
 // --- Element capture on pointerdown (earliest event, fires before link navigation) ---
 
