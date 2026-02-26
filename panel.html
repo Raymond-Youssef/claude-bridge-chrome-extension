@@ -50,6 +50,18 @@
   }
   .status.connected { color: #e07a3a; }
 
+  .mcp-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #5c4a3a;
+    flex-shrink: 0;
+  }
+  .mcp-dot.connected {
+    background: #4ade80;
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.4);
+  }
+
   .empty {
     color: #8a7565;
     text-align: center;
@@ -179,6 +191,7 @@
     <button id="inspect-btn">Inspect</button>
     <button id="clear-btn">Clear</button>
     <span id="hint" class="hint" style="display:none;">Click an element to select it</span>
+    <div id="mcp-dot" class="mcp-dot" title="MCP server not connected"></div>
     <span id="status" class="status">Waiting...</span>
   </div>
 
@@ -189,7 +202,7 @@
 
   <div id="tab-element" class="tab-content active">
     <div id="empty-state" class="empty">
-      Click <strong>Inspect</strong> then Option+Click an element<br>on your localhost page.
+      Click <strong>Inspect</strong> then click an element<br>on your page to capture it.
     </div>
     <div id="element-detail" style="display:none;"></div>
   </div>

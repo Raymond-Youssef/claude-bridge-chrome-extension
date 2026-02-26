@@ -6,6 +6,7 @@ let activeIndex = -1;
 const inspectBtn = document.getElementById('inspect-btn');
 const clearBtn = document.getElementById('clear-btn');
 const statusEl = document.getElementById('status');
+const mcpDot = document.getElementById('mcp-dot');
 const emptyState = document.getElementById('empty-state');
 const elementDetail = document.getElementById('element-detail');
 const historyList = document.getElementById('history-list');
@@ -16,14 +17,28 @@ const historyList = document.getElementById('history-list');
 const panelPort = chrome.runtime.connect({ name: 'devtools-panel' });
 panelPort.postMessage({ type: 'PANEL_INIT', tabId: chrome.devtools.inspectedWindow.tabId });
 
+// --- MCP status indicator ---
+function updateMcpStatus() {
+  chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
+    if (chrome.runtime.lastError) return;
+    mcpDot.className = response?.connected ? 'mcp-dot connected' : 'mcp-dot';
+    mcpDot.title = response?.connected ? 'MCP server connected' : 'MCP server not connected';
+  });
+}
+updateMcpStatus();
+setInterval(updateMcpStatus, 3000);
+
+// --- Tab switching helper ---
+function switchToTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
 // --- Tabs ---
 document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-  });
+  tab.addEventListener('click', () => switchToTab(tab.dataset.tab));
 });
 
 // --- Inspect toggle ---
@@ -58,8 +73,6 @@ clearBtn.addEventListener('click', () => {
 });
 
 // --- Listen for captured elements from content script ---
-// We poll via a shared background message since DevTools panels
-// can't directly receive window.postMessage from the page.
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'ELEMENT_CAPTURED_FOR_PANEL') {
@@ -69,12 +82,7 @@ chrome.runtime.onMessage.addListener((message) => {
     activeIndex = 0;
     renderElement(el);
     renderHistory();
-
-    // Switch to element tab
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('[data-tab="element"]').classList.add('active');
-    document.getElementById('tab-element').classList.add('active');
+    switchToTab('element');
 
     // Inspect mode auto-stopped after selection
     inspecting = false;
@@ -186,12 +194,7 @@ function renderHistory() {
       activeIndex = parseInt(item.dataset.index);
       renderElement(history[activeIndex]);
       renderHistory();
-
-      // Switch to element tab
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector('[data-tab="element"]').classList.add('active');
-      document.getElementById('tab-element').classList.add('active');
+      switchToTab('element');
     });
   });
 }

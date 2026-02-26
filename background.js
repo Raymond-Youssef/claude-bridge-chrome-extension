@@ -8,7 +8,7 @@ function connectWebSocket() {
   ws = new WebSocket(`ws://localhost:${WS_PORT}`);
   ws.onopen = () => {
     console.log('[claude-bridge] Connected to MCP server');
-    retryDelay = 1000; // reset on successful connection
+    retryDelay = 1000;
   };
   ws.onclose = () => {
     console.log(`[claude-bridge] Disconnected, retrying in ${retryDelay / 1000}s...`);
@@ -43,7 +43,7 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'GET_MCP_STATUS') {
     sendResponse({ connected: ws?.readyState === WebSocket.OPEN });
     return;
