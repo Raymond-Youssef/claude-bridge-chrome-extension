@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Simplified icon for 16px: just rounded square + bold dot + short crosshair lines -->
+  <rect width="16" height="16" rx="3.5" ry="3.5" fill="#1a1410"/>
+  <circle cx="8" cy="8" r="2.2" fill="#e07a3a"/>
+  <!-- Crosshair lines -->
+  <line x1="8" y1="2" x2="8" y2="4.5" stroke="#e07a3a" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="8" y1="11.5" x2="8" y2="14" stroke="#e07a3a" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="2" y1="8" x2="4.5" y2="8" stroke="#e07a3a" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="11.5" y1="8" x2="14" y2="8" stroke="#e07a3a" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
