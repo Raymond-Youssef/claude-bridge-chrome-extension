@@ -3,6 +3,7 @@ const WS_PORT = 18925;
 let ws = null;
 let retryDelay = 1000;
 const MAX_RETRY_DELAY = 30000;
+let lastPayload = null;
 
 function connectWebSocket() {
   let wasConnected = false;
@@ -11,6 +12,9 @@ function connectWebSocket() {
     wasConnected = true;
     console.log('[claude-bridge] Connected to MCP server');
     retryDelay = 1000;
+    if (lastPayload) {
+      ws.send(JSON.stringify(lastPayload));
+    }
   };
   ws.onclose = () => {
     // Only log if we were previously connected (not on initial connection failures)
@@ -23,29 +27,6 @@ function connectWebSocket() {
 
 connectWebSocket();
 
-// Track which tabs have the DevTools panel open.
-// When the panel closes, disable inspect mode on that tab.
-const panelTabs = new Map(); // port -> tabId
-
-chrome.runtime.onConnect.addListener((port) => {
-  if (port.name !== 'devtools-panel') return;
-
-  port.onMessage.addListener((msg) => {
-    if (msg.type === 'PANEL_INIT') {
-      panelTabs.set(port, msg.tabId);
-    }
-  });
-
-  port.onDisconnect.addListener(() => {
-    const tabId = panelTabs.get(port);
-    panelTabs.delete(port);
-    if (tabId != null) {
-      // Tell the content script to disable inspect mode
-      chrome.tabs.sendMessage(tabId, { type: 'DISABLE_INSPECT' }).catch(() => {});
-    }
-  });
-});
-
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'GET_MCP_STATUS') {
     sendResponse({ connected: ws?.readyState === WebSocket.OPEN });
@@ -53,16 +34,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'ELEMENT_CAPTURED') {
-    // Send to MCP server
+    lastPayload = message.payload;
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message.payload));
       console.log('[claude-bridge] Element sent to MCP server');
     }
-
-    // Forward to DevTools panel
-    chrome.runtime.sendMessage({
-      type: 'ELEMENT_CAPTURED_FOR_PANEL',
-      payload: message.payload
-    }).catch(() => {});
   }
 });

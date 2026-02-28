@@ -11,25 +11,128 @@ const emptyState = document.getElementById('empty-state');
 const elementDetail = document.getElementById('element-detail');
 const historyList = document.getElementById('history-list');
 
-// Connect a port to background so it knows the panel is open.
-// When this panel is destroyed (DevTools closed), the port disconnects
-// and background will disable inspect mode on the tab.
-const panelPort = chrome.runtime.connect({ name: 'devtools-panel' });
-panelPort.postMessage({ type: 'PANEL_INIT', tabId: chrome.devtools.inspectedWindow.tabId });
+// --- Inject pageScript.js into the inspected page on demand ---
+function injectPageScript() {
+  const scriptUrl = `chrome-extension://${chrome.runtime.id}/pageScript.js`;
+  chrome.devtools.inspectedWindow.eval(
+    `if (!document.getElementById('__claude_bridge_injected__')) {
+       var s = document.createElement('script');
+       s.id = '__claude_bridge_injected__';
+       s.src = '${scriptUrl}';
+       document.documentElement.appendChild(s);
+     }`,
+    (_result, error) => {
+      if (error) console.log('[claude-bridge] Failed to inject page script:', error);
+    }
+  );
+}
+
+injectPageScript();
+
+// Re-inject after page navigation
+chrome.devtools.network.onNavigated.addListener(() => {
+  injectPageScript();
+  if (inspecting) {
+    inspecting = false;
+    inspectBtn.classList.remove('active');
+    inspectBtn.textContent = 'Inspect';
+    document.getElementById('hint').style.display = 'none';
+    stopCapturePolling();
+  }
+});
+
+// --- Capture polling (only during inspect mode) ---
+let pollId = null;
+let lastSeq = 0;
+
+function startCapturePolling() {
+  // Read current seq to avoid processing stale captures
+  chrome.devtools.inspectedWindow.eval(
+    'window.__claudeBridgeCaptureSeq || 0',
+    (result) => {
+      if (result != null) lastSeq = result;
+      pollId = setInterval(pollForCapture, 150);
+    }
+  );
+}
+
+function stopCapturePolling() {
+  if (pollId) {
+    clearInterval(pollId);
+    pollId = null;
+  }
+}
+
+function pollForCapture() {
+  chrome.devtools.inspectedWindow.eval(
+    'window.__claudeBridgeCaptureSeq || 0',
+    (seq, error) => {
+      if (error || seq == null || seq <= lastSeq) return;
+      lastSeq = seq;
+      chrome.devtools.inspectedWindow.eval(
+        'JSON.stringify(window.__claudeBridgeCapture)',
+        (jsonStr, error2) => {
+          if (error2 || !jsonStr) return;
+          try {
+            handleCapture(JSON.parse(jsonStr));
+          } catch (e) {
+            console.log('[claude-bridge] Failed to parse capture:', e);
+          }
+        }
+      );
+    }
+  );
+}
+
+function handleCapture(el) {
+  history.unshift(el);
+  if (history.length > 10) history.pop();
+  activeIndex = 0;
+  renderElement(el);
+  renderHistory();
+  switchToTab('element');
+
+  inspecting = false;
+  inspectBtn.classList.remove('active');
+  inspectBtn.textContent = 'Inspect';
+  document.getElementById('hint').style.display = 'none';
+  stopCapturePolling();
+
+  mcpLabel.textContent = 'Captured';
+  mcpLabel.className = 'mcp-label connected';
+  setTimeout(() => updateMcpStatus(), 1500);
+
+  // Send to background for WebSocket relay to MCP server
+  chrome.runtime.sendMessage({
+    type: 'ELEMENT_CAPTURED',
+    payload: el
+  }).catch(() => {});
+}
+
+// --- Cleanup on panel close ---
+window.addEventListener('pagehide', () => {
+  stopCapturePolling();
+  if (inspecting) {
+    chrome.devtools.inspectedWindow.eval(
+      `window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: false }, '*')`
+    );
+  }
+});
 
 // --- MCP status indicator ---
 let mcpPollId = null;
 
 function updateMcpStatus() {
   try {
-    void chrome.runtime.id; // throws if context is invalidated
+    void chrome.runtime.id;
   } catch {
     clearInterval(mcpPollId);
     return;
   }
   chrome.runtime.sendMessage({ type: 'GET_MCP_STATUS' }, (response) => {
     try { void chrome.runtime.lastError; } catch { clearInterval(mcpPollId); return; }
-    if (response?.connected) {
+    const connected = !!response?.connected;
+    if (connected) {
       mcpDot.className = 'mcp-dot connected';
       mcpDot.title = 'MCP server connected';
       mcpLabel.textContent = 'MCP connected';
@@ -39,6 +142,17 @@ function updateMcpStatus() {
       mcpDot.title = 'MCP server not connected';
       mcpLabel.textContent = 'MCP disconnected';
       mcpLabel.className = 'mcp-label';
+    }
+    inspectBtn.disabled = !connected;
+    if (!connected && inspecting) {
+      inspecting = false;
+      inspectBtn.classList.remove('active');
+      inspectBtn.textContent = 'Inspect';
+      document.getElementById('hint').style.display = 'none';
+      stopCapturePolling();
+      chrome.devtools.inspectedWindow.eval(
+        `window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: false }, '*')`
+      );
     }
   });
 }
@@ -65,20 +179,30 @@ inspectBtn.addEventListener('click', () => {
   inspectBtn.textContent = inspecting ? 'Stop Inspecting' : 'Inspect';
   document.getElementById('hint').style.display = inspecting ? '' : 'none';
 
+  // Ensure page script is injected before toggling
+  injectPageScript();
+
   chrome.devtools.inspectedWindow.eval(
     `window.postMessage({ type: 'ELEMENT_BRIDGE_TOGGLE', enabled: ${inspecting} }, '*')`,
     (_result, error) => {
       if (error) {
-        // Page may have navigated or CSP blocked eval — reset state
         inspecting = false;
         inspectBtn.classList.remove('active');
         inspectBtn.textContent = 'Inspect';
         document.getElementById('hint').style.display = 'none';
+        stopCapturePolling();
         mcpLabel.textContent = 'Error';
         mcpLabel.className = 'mcp-label';
+        return;
       }
     }
   );
+
+  if (inspecting) {
+    startCapturePolling();
+  } else {
+    stopCapturePolling();
+  }
 });
 
 // --- Clear ---
@@ -87,30 +211,6 @@ clearBtn.addEventListener('click', () => {
   activeIndex = -1;
   renderElement(null);
   renderHistory();
-});
-
-// --- Listen for captured elements from content script ---
-
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === 'ELEMENT_CAPTURED_FOR_PANEL') {
-    const el = message.payload;
-    history.unshift(el);
-    if (history.length > 10) history.pop();
-    activeIndex = 0;
-    renderElement(el);
-    renderHistory();
-    switchToTab('element');
-
-    // Inspect mode auto-stopped after selection
-    inspecting = false;
-    inspectBtn.classList.remove('active');
-    inspectBtn.textContent = 'Inspect';
-    document.getElementById('hint').style.display = 'none';
-
-    mcpLabel.textContent = 'Captured';
-    mcpLabel.className = 'mcp-label connected';
-    setTimeout(() => updateMcpStatus(), 1500);
-  }
 });
 
 // --- Render element detail ---

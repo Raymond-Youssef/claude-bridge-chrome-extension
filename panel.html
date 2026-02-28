@@ -30,7 +30,8 @@
     cursor: pointer;
     transition: background 0.15s;
   }
-  button:hover { background: #4a3828; }
+  button:hover:not(:disabled) { background: #4a3828; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.active {
     background: #c75b24;
     border-color: #e07a3a;

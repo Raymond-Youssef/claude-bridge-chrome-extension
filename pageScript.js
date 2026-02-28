@@ -268,10 +268,8 @@ document.addEventListener('pointerdown', (event) => {
     safePayload = { ...payload, react: null, computedStyles: {} };
   }
 
-  window.postMessage({
-    type: 'ELEMENT_BRIDGE_CAPTURE',
-    payload: safePayload
-  }, '*');
+  window.__claudeBridgeCapture = safePayload;
+  window.__claudeBridgeCaptureSeq = (window.__claudeBridgeCaptureSeq || 0) + 1;
 
   flashElement(element);
 }, true);

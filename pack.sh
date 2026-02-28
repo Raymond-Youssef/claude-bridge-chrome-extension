@@ -12,7 +12,6 @@ zip -r "$OUTFILE" \
   background.js \
   devtools.html \
   devtools.js \
-  injector.js \
   pageScript.js \
   panel.html \
   panel.js \
